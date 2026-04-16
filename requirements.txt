@@ -5,3 +5,7 @@ matplotlib
 seaborn
 streamlit
 nltk
+fastapi
+uvicorn
+google-cloud-storage
+joblib
