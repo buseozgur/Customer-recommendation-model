@@ -1,12 +1,31 @@
-venv/
+# Environment
+.env
+.venv
 
 # data klasörü içeriği ignore ama klasör kalsın
 data/*
 !data/.gitkeep
 
-# processed da ignore
+# processed ignore
 data/processed/*
 !data/processed/.gitkeep
 
+# raw ignore
+data/raw/*
+!data/raw/.gitkeep
+
 __pycache__/
 .ipynb_checkpoints/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Package build
+*.egg-info/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Mac
+.DS_Store

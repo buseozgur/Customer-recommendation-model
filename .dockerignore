@@ -1,0 +1,26 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+.env
+
+# Jupyter
+.ipynb_checkpoints/
+notebooks/
+
+# Data - UI build için gerek yok
+data/raw/
+data/processed/
+outputs/
+
+# Mac
+.DS_Store
+
+# Build metadata
+*.egg-info/
