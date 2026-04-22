@@ -1,0 +1,57 @@
+{
+  "best_model": "LightGBM (tuned)",
+  "model_type": "lgbm",
+  "features": [
+    "mean_weighted_score",
+    "mean_rating",
+    "log_review_count",
+    "sqrt_review_count",
+    "helped_ratio",
+    "worsened_ratio",
+    "net_effect_ratio",
+    "mean_confidence",
+    "review_count_bonus",
+    "rating_x_helped",
+    "rating_x_net",
+    "confidence_x_score",
+    "helped_x_confidence",
+    "score_x_log_reviews",
+    "helped_sq",
+    "worsened_sq",
+    "concern_enc",
+    "skin_type_enc",
+    "primary_category_enc",
+    "secondary_category_enc"
+  ],
+  "cat_feature_idxs": [
+    16,
+    17,
+    18,
+    19
+  ],
+  "sbert_model": "all-MiniLM-L6-v2",
+  "effect_weights": {
+    "helped": 1.0,
+    "worsened": -1.5,
+    "target_only": 0.3,
+    "unknown": 0.0
+  },
+  "ensemble_weights": {
+    "w_aggregate": 0.0581,
+    "w_model": 0.8159,
+    "w_semantic": 0.1261
+  },
+  "cv_scores": {
+    "lgbm_baseline": 1.0,
+    "xgb_baseline": 1.0,
+    "catboost_baseline": 1.0,
+    "rf_baseline": 1.0,
+    "ridge_baseline": 0.999,
+    "lgbm_tuned": 1.0,
+    "xgb_tuned": 0.9995
+  },
+  "final_ndcg10": 1.0,
+  "ensemble_ndcg10": 1.0,
+  "optuna_trials": 50,
+  "min_reviews": 3
+}
