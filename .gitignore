@@ -2,12 +2,7 @@
 .env
 .venv
 
-# data klasörü içeriği ignore ama klasör kalsın
-data/*
-!data/.gitkeep
-
-# processed ignore
-data/processed/*
+# data processed
 !data/processed/.gitkeep
 
 # raw ignore
