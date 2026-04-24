@@ -1,0 +1,12 @@
+data/
+outputs/
+notebooks/
+catboost_info/
+.ipynb_checkpoints/
+*.ipynb
+__pycache__/
+*.pyc
+.git/
+venv/
+env/
+.DS_Store
