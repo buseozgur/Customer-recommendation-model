@@ -1,26 +1,9 @@
-# Environment
-.env
-.venv
-
-# data processed
-!data/processed/.gitkeep
-
-# raw ignore
-data/raw/*
-!data/raw/.gitkeep
-
-__pycache__/
+data/
+outputs/
+notebooks/
+catboost_info/
 .ipynb_checkpoints/
-
-# Python cache
+*.ipynb
 __pycache__/
-*.pyc
-
-# Package build
-*.egg-info/
-
-# Jupyter
-.ipynb_checkpoints/
-
-# Mac
-.DS_Store
+.git/
+venv/

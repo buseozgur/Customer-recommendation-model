@@ -2,18 +2,15 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir streamlit requests
 
-COPY requirements-api.txt .
-RUN pip install --no-cache-dir -r requirements-api.txt
+# Copy Streamlit app
+COPY app/app.py ./app/app.py
 
-COPY api/ ./api/
-COPY src/ ./src/
-COPY outputs/models/ ./outputs/models/
-COPY data/processed/ ./data/processed/
-
+# Expose port
 EXPOSE 8080
 
-CMD ["sh", "-c", "uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-8080}"]
+# Run Streamlit
+CMD streamlit run app/app.py --server.port=${PORT:-8080} --server.address=0.0.0.0

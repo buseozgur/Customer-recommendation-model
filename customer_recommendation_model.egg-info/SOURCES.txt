@@ -1,0 +1,8 @@
+README.md
+setup.py
+customer_recommendation_model.egg-info/PKG-INFO
+customer_recommendation_model.egg-info/SOURCES.txt
+customer_recommendation_model.egg-info/dependency_links.txt
+customer_recommendation_model.egg-info/top_level.txt
+src/__init__.py
+src/data_preparation.py

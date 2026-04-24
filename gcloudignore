@@ -1,50 +1,12 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-venv/
-env/
-ENV/
-
-# Jupyter
+data/
+outputs/
+notebooks/
+catboost_info/
 .ipynb_checkpoints/
 *.ipynb
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Git
+__pycache__/
+*.pyc
 .git/
-.gitignore
-
-# Documentation
-README.md
-*.md
-
-# Metrics (not needed in production)
-outputs/metrics/
-outputs/models/optuna_studies.pkl
-
-# Raw data (only need processed data)
-data/raw/
-
-# Training scripts (not needed in production)
-train.py
-notebooks/
-
-# Docker
-.dockerignore
-Dockerfile.api
-Dockerfile.ui
-
-# Mac
+venv/
+env/
 .DS_Store
-
-# Test files
-test_*.py
-*_test.py

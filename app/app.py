@@ -1,159 +1,378 @@
 import os
 import streamlit as st
 import requests
+from typing import Optional
 
 API_URL = os.getenv("API_URL", "http://localhost:8000")
 
+# Page config
 st.set_page_config(
-    page_title="Sephora Recommender",
-    page_icon="💄",
-    layout="wide"
+    page_title="Sephora Recommendation Agent",
+    page_icon="https://i.ibb.co/bRW3RW20/sephora-icon.jpg",
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
-st.markdown("""
-<style>
-.stApp {
-    background-color: #f6f6f6;
-}
-.block-container {
-    padding-top: 4rem;
-    padding-bottom: 2rem;
-    max-width: 1100px;
-}
-.sephora-title {
-    text-align: center;
-    font-size: 48px;
-    font-weight: 900;
-    color: #000;
-    margin-bottom: 0.3rem;
-}
-.sephora-subtitle {
-    text-align: center;
-    font-size: 18px;
-    color: #666;
-    margin-bottom: 2rem;
-}
-.product-card {
-    background: white;
-    border-radius: 16px;
-    padding: 18px;
-    border: 1px solid #e6e6e6;
-    margin-bottom: 14px;
-}
-.product-name {
-    font-size: 22px;
-    font-weight: 800;
-    color: #111;
-}
-.product-brand {
-    color: #666;
-    margin-bottom: 10px;
-}
-.score-badge {
-    display: inline-block;
-    background: #000;
-    color: white;
-    border-radius: 999px;
-    padding: 6px 12px;
-    font-size: 13px;
-    font-weight: 700;
-    margin-bottom: 12px;
-}
-.stButton > button {
-    width: 100%;
-    background-color: #000;
-    color: white;
-    border-radius: 10px;
-    font-weight: 700;
-    padding: 0.8rem 1rem;
-}
-</style>
-""", unsafe_allow_html=True)
+# Initialize session state FIRST
+if 'page' not in st.session_state:
+    st.session_state.page = 'landing'
 
+# Custom CSS - different for each page
+if st.session_state.page == 'landing':
+    st.markdown("""
+    <style>
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        header {visibility: hidden;}
+        .block-container {padding: 0 !important; max-width: 100% !important;}
+        .main {padding: 0 !important;}
 
+        /* Hide the button */
+        div[data-testid="stButton"] {
+            position: fixed;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            width: 200px;
+            height: 150px;
+        }
+
+        div[data-testid="stButton"] > button {
+            width: 100% !important;
+            height: 100% !important;
+            background: transparent !important;
+            border: none !important;
+            padding: 0 !important;
+            cursor: pointer !important;
+            opacity: 0 !important;
+        }
+
+        div[data-testid="stButton"] > button:hover {
+            opacity: 0.1 !important;
+            background: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .stImage {
+            line-height: 0;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
+else:  # recommendations page
+    st.markdown("""
+    <style>
+        #MainMenu, footer, header {
+            visibility: hidden;
+        }
+
+        .stApp, .main {
+            background-color: #000000 !important;
+            padding: 0 !important;
+        }
+
+        section.main > div {
+            padding-top: 0rem !important;
+        }
+
+        .block-container {
+            padding-top: 0rem !important;
+            padding-bottom: 3rem !important;
+            padding-left: 2rem !important;
+            padding-right: 2rem !important;
+            max-width: 900px !important;
+            background-color: #000000 !important;
+        }
+
+        .recommendation-header {
+            background: #ffffff !important;
+            padding: 0.8rem 1rem !important;
+            text-align: center !important;
+            margin-top: -1rem !important;
+            margin-left: calc(-50vw + 50%) !important;
+            margin-right: calc(-50vw + 50%) !important;
+            margin-bottom: 0rem !important;
+            width: 100vw !important;
+        }
+
+        .recommendation-header img {
+            max-height: 80px !important;
+            object-fit: contain !important;
+        }
+
+        .back-button-wrapper {
+            margin-top: 2rem !important;
+            margin-bottom: 2rem !important;
+        }
+
+        h1, h2, h3, h4, h5, h6, p, .stMarkdown {
+            color: #ffffff !important;
+        }
+
+        label,
+        .stSelectbox label,
+        .stSlider label,
+        .stCheckbox label {
+            color: #ffffff !important;
+            font-weight: 600 !important;
+        }
+
+        .stSelectbox > div > div,
+        .stSelectbox div[data-baseweb="select"] {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            border-radius: 8px !important;
+        }
+
+        .stSelectbox div[data-baseweb="select"] * {
+            color: #000000 !important;
+        }
+
+        .stSelectbox svg {
+            fill: #000000 !important;
+            color: #000000 !important;
+        }
+
+        ul[role="listbox"],
+        ul[role="listbox"] li {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+
+        ul[role="listbox"] li div,
+        div[data-baseweb="popover"],
+        div[data-baseweb="popover"] * {
+            color: #000000 !important;
+        }
+
+        input {
+            color: #000000 !important;
+            background-color: #ffffff !important;
+        }
+
+        .stButton > button {
+            background-color: #ff4b4b !important;
+            color: #ffffff !important;
+            border: none !important;
+            border-radius: 8px !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.5px !important;
+        }
+
+        .stButton > button p {
+            color: #ffffff !important;
+        }
+
+        .stButton > button:hover {
+            background-color: #ff3333 !important;
+            color: #ffffff !important;
+        }
+
+        button[kind="secondary"] {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            border: none !important;
+        }
+
+        button[kind="secondary"] p {
+            color: #000000 !important;
+        }
+
+        .product-card {
+            background: #1a1a1a !important;
+            border: 2px solid #333333 !important;
+            border-radius: 12px !important;
+            padding: 1.5rem !important;
+            margin-bottom: 1rem !important;
+        }
+
+        .product-rank {
+            display: inline-block !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+            padding: 0.5rem 1rem !important;
+            border-radius: 20px !important;
+            font-size: 14px !important;
+            font-weight: 800 !important;
+            margin-bottom: 1rem !important;
+        }
+
+        .product-name {
+            font-size: 22px !important;
+            font-weight: 800 !important;
+            color: #ffffff !important;
+            margin-bottom: 0.5rem !important;
+        }
+
+        .product-brand {
+            font-size: 16px !important;
+            color: #cccccc !important;
+            margin-bottom: 1rem !important;
+        }
+
+        .product-stats {
+            color: #aaaaaa !important;
+            font-size: 14px !important;
+            line-height: 1.8 !important;
+        }
+
+        .product-stats b {
+            color: #ffffff !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
+# API Functions
 @st.cache_data(show_spinner=False)
 def get_concerns():
-    response = requests.get(f"{API_URL}/concerns", timeout=20)
-    response.raise_for_status()
-    return response.json()["concerns"]
-
+    try:
+        response = requests.get(f"{API_URL}/concerns", timeout=20)
+        response.raise_for_status()
+        return response.json()["concerns"]
+    except:
+        return ["acne", "aging", "dark_spots", "dryness", "dullness", "pores", "sensitivity", "uneven_texture"]
 
 @st.cache_data(show_spinner=False)
 def get_skin_types():
-    response = requests.get(f"{API_URL}/skin-types", timeout=20)
-    response.raise_for_status()
-    return response.json()["skin_types"]
+    try:
+        response = requests.get(f"{API_URL}/skin-types", timeout=20)
+        response.raise_for_status()
+        return response.json()["skin_types"]
+    except:
+        return ["combination", "dry", "normal", "oily", "sensitive"]
+
+@st.cache_data(show_spinner=False)
+def get_categories():
+    try:
+        response = requests.get(f"{API_URL}/categories", timeout=20)
+        response.raise_for_status()
+        return response.json()["categories"]
+    except:
+        return []
+
+def get_recommendations(concern, skin_type, category=None, min_price=None, max_price=None, top_n=5):
+    try:
+        params = {"concern": concern, "skin_type": skin_type, "top_n": top_n}
+        if category:
+            params["category"] = category
+        if min_price is not None:
+            params["min_price"] = min_price
+        if max_price is not None:
+            params["max_price"] = max_price
+
+        response = requests.get(f"{API_URL}/recommend", params=params, timeout=30)
+        response.raise_for_status()
+        return response.json()["results"]
+    except Exception as e:
+        st.error(f"API Error: {e}")
+        return []
 
 
-def get_recommendations(concern, skin_type, top_n=5):
-    response = requests.get(
-        f"{API_URL}/recommend",
-        params={
-            "concern": concern,
-            "skin_type": skin_type,
-            "top_n": top_n
-        },
-        timeout=30
+# ═══════════════════════════════════════════════════════════════════
+# LANDING PAGE
+# ═══════════════════════════════════════════════════════════════════
+
+if st.session_state.page == 'landing':
+    # Invisible clickable button
+    if st.button(" ", key="invisible_button"):
+        st.session_state.page = 'recommendations'
+        st.rerun()
+
+    # Full screen Sephora homepage image
+    st.image(
+        "https://i.ibb.co/ccQGWStG/sephora-homepage.jpg",
+        use_container_width=True
     )
-    response.raise_for_status()
-    return response.json()["results"]
 
 
-st.markdown('<div class="sephora-title">SEPHORA</div>', unsafe_allow_html=True)
-st.markdown(
-    '<div class="sephora-subtitle">AI-Powered Skincare Recommendation</div>',
-    unsafe_allow_html=True
-)
+# ═══════════════════════════════════════════════════════════════════
+# RECOMMENDATION PAGE
+# ═══════════════════════════════════════════════════════════════════
 
-st.markdown("### Select your skin concern and skin type")
+elif st.session_state.page == 'recommendations':
+    # Header - Full width, at top
+    st.markdown("""
+    <div class="recommendation-header">
+        <img src="https://i.ibb.co/nq0s0Fc1/Sephora-Logo.png" alt="Sephora">
+    </div>
+    """, unsafe_allow_html=True)
 
-try:
+    # Back button wrapper with spacing
+    st.markdown('<div class="back-button-wrapper">', unsafe_allow_html=True)
+    if st.button("← Back to Home"):
+        st.session_state.page = 'landing'
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown("---")
+    st.markdown("## Find Your Perfect Products")
+
+    # Load data
     concerns = get_concerns()
     skin_types = get_skin_types()
-except requests.RequestException:
-    st.error("API’den dropdown verileri yüklenemedi.")
-    st.stop()
+    categories = get_categories()
 
-col1, col2 = st.columns(2)
+    # Form
+    col1, col2 = st.columns(2)
 
-with col1:
-    selected_concern = st.selectbox("Concern", concerns)
+    with col1:
+        if categories:
+            selected_category = st.selectbox("Product Category", ["All Categories"] + categories)
+        else:
+            selected_category = "All Categories"
 
-with col2:
-    selected_skin_type = st.selectbox("Skin Type", skin_types)
+        selected_concern = st.selectbox("Skin Concern", concerns)
 
-top_n = st.slider("Number of recommendations", min_value=1, max_value=10, value=5)
+    with col2:
+        selected_skin_type = st.selectbox("Skin Type", skin_types)
 
-if st.button("Find Recommendations"):
-    with st.spinner("Finding the best products for you..."):
-        try:
+    # Price filter
+    st.markdown("### Price Range")
+    use_price = st.checkbox("Enable price filter")
+
+    if use_price:
+        price_range = st.slider("Price ($)", 0.0, 200.0, (0.0, 200.0), 5.0)
+        min_price, max_price = price_range
+    else:
+        min_price, max_price = None, None
+
+    # Number of results
+    top_n = st.slider("Number of recommendations", 1, 10, 5)
+
+    # Search button
+    if st.button("🔍 FIND PRODUCTS", use_container_width=True, type="primary"):
+        with st.spinner("Finding the best products for you..."):
             results = get_recommendations(
                 concern=selected_concern,
                 skin_type=selected_skin_type,
+                category=selected_category if selected_category != "All Categories" else None,
+                min_price=min_price,
+                max_price=max_price,
                 top_n=top_n
             )
-        except requests.RequestException:
-            st.error("API’den öneriler alınamadı.")
-            st.stop()
 
-    st.markdown("### Recommended Products")
+        st.markdown("---")
+        st.markdown("## Recommended Products")
 
-    if not results:
-        st.warning("Bu concern + skin type kombinasyonu için sonuç bulunamadı.")
-    else:
-        for i, item in enumerate(results, start=1):
-            st.markdown(
-                f"""
+        if not results:
+            st.warning("⚠️ No products found. Try different filters.")
+        else:
+            for idx, item in enumerate(results, 1):
+                st.markdown(f"""
                 <div class="product-card">
-                    <div class="score-badge">#{i} Recommendation</div>
-                    <div class="product-name">{item.get("product_name", "")}</div>
-                    <div class="product-brand">{item.get("brand_name", "")}</div>
-                    <p><b>Score:</b> {item.get("score", 0)}</p>
-                    <p><b>Rating:</b> {item.get("mean_rating", 0)}/5</p>
-                    <p><b>Helped Ratio:</b> {item.get("helped_ratio", 0)}</p>
-                    <p><b>Review Count:</b> {item.get("review_count", 0)}</p>
-                    <p><b>Category:</b> {item.get("primary_category", "")} › {item.get("secondary_category", "")}</p>
+                    <div class="product-rank">#{idx} Recommendation</div>
+                    <div class="product-name">{item.get('product_name', 'Unknown')}</div>
+                    <div class="product-brand">{item.get('brand_name', 'N/A')}</div>
+                    <div class="product-stats">
+                        <b>Price:</b> ${item.get('price', 0):.2f}<br>
+                        <b>Score:</b> {item.get('score', 0):.4f}<br>
+                        <b>Rating:</b> {item.get('mean_rating', 0):.1f}/5 |
+                        <b>Helped:</b> {item.get('helped_ratio', 0)*100:.1f}%<br>
+                        <b>Reviews:</b> {item.get('review_count', 0)}<br>
+                        <b>Category:</b> {item.get('secondary_category', '')}<br>
+                        <b>For:</b> {item.get('concern', '')} | {item.get('skin_type', '')}
+                    </div>
                 </div>
-                """,
-                unsafe_allow_html=True
-            )
+                """, unsafe_allow_html=True)

@@ -6,10 +6,9 @@ Converted from notebook: 04_Recommendation_Model.ipynb
 
 # ======================================================================
 # # 04 — Product Recommendation Model
-# **Girdi:** `data/processed/review_text_features.parquet` & `review_concern_level.parquet`  
+# **Girdi:** `data/processed/review_text_features.parquet` & `review_concern_level.parquet`
 # **Çıktı:** Eğitilmiş model + scoring tablosu + metrikler
 # ---
-# ### Neyi nereye kaydediyoruz?
 # ```
 # CUSTOMER-RECOMMENDATION-MODEL/
 # │
@@ -35,29 +34,13 @@ Converted from notebook: 04_Recommendation_Model.ipynb
 # │   ├── ensemble_weights.png                ağırlık pie chart
 # │   └── performance_heatmap.png             concern × skin_type hata analizi
 # ```
-# ### Pipeline Akışı
-# ```
-# 01_data_understanding → 02_EDA → 03_NLP_concern → [BU NOTEBOOK] → (sonraki: API & UI)
-# ```
-# ======================================================================
 
-
-# ======================================================================
-# ---
-# ## 0. Kurulum & Import
-# ======================================================================
-
-
-# ======================================================================
-# ## 1. Dizin Yapısı
-# Bu notebook `notebooks/` dizininden çalışıyor → path'ler `../` ile başlıyor.
-# ======================================================================
 
 
 # ======================================================================
 # ## 2. Veri Yükleme & Hızlı Bakış
 # ======================================================================
-
+DATA_DIR = Path("../data/processed")
 rtf = pd.read_parquet(DATA_DIR / 'review_text_features.parquet')
 rcl = pd.read_parquet(DATA_DIR / 'review_concern_level.parquet')
 
@@ -102,7 +85,7 @@ print(f'✅ Kaydedildi → outputs/metrics/eda_overview.png')
 # ---
 # ## 3. Feature Engineering
 # ### Adım 3a — Aggregate Scoring
-# Her `(product_id, concern, skin_type)` üçlüsü için review'lardan deterministik bir skor üretiyoruz.  
+# Her `(product_id, concern, skin_type)` üçlüsü için review'lardan deterministik bir skor üretiyoruz.
 # Bu hem bir **baseline** hem de ensemble'ın bir katmanı.
 # ```
 # effect_weight  →  helped: +1.0 | worsened: -1.5 | target_only: +0.3 | unknown: 0
@@ -238,7 +221,7 @@ print(ml_df['relevance_label'].value_counts().sort_index())
 # ======================================================================
 # ---
 # ## 4. Cross-Validation Framework
-# **Group K-Fold**: `query_id` (concern × skin_type) grupları bölünmeden train/val'a ayrılır.  
+# **Group K-Fold**: `query_id` (concern × skin_type) grupları bölünmeden train/val'a ayrılır.
 # Aynı query'nin bazı ürünleri train'de, bazıları val'da olmaz → **data leakage yok**.
 # ======================================================================
 
@@ -435,7 +418,7 @@ print(f'\n✅ Final model eğitildi: {MODEL_TYPE}')
 # ======================================================================
 # ---
 # ## 9. Semantic Retrieval Katmanı (SBERT)
-# Her `(product_id, concern)` çifti için ortalama review embedding'i hesaplanır.  
+# Her `(product_id, concern)` çifti için ortalama review embedding'i hesaplanır.
 # Inference sırasında kullanıcının `"oily skin, acne"` girdisi doğal dil cümlesi olarak embed edilir ve cosine similarity ile en yakın ürünler getirilir.
 # ======================================================================
 
@@ -588,22 +571,42 @@ print(f'║    w_model     : {W_MODEL:<44.4f}║')
 print(f'║    w_semantic  : {W_SEM:<44.4f}║')
 print('╚' + '═'*63 + '╝')
 
+# ======================================================================
+# FINAL STEP — ADD PRICE COLUMN TO ml_scoring_table
+# ======================================================================
 
-# ======================================================================
-# ---
-# ## Sonraki Adım → API & UI
-# Bu notebook'tan üretilen artefactlar bir sonraki aşamada şu şekilde kullanılacak:
-# ```python
-# # API endpoint örneği (FastAPI)
-# # POST /recommend
-# # body: { "skin_type": "oily", "concern": "acne", "top_n": 10 }
-# @app.post('/recommend')
-# def recommend(skin_type: str, concern: str, top_n: int = 10):
-#     # 1. config.json oku → model type, features, weights
-#     # 2. ml_scoring_table.parquet filtrele (concern + skin_type)
-#     # 3. final_ranker ile rerank
-#     # 4. product_concern_embeddings ile semantic score
-#     # 5. ensemble_weights ile birleştir
-#     # 6. top_n döndür
-# ```
-# ======================================================================
+print("\n💰 Adding price_usd_final to ml_scoring_table...")
+
+scoring_path = DATA_DIR / "ml_scoring_table.parquet"
+review_master_path = DATA_DIR / "review_master.parquet"
+
+# Load scoring table
+scoring_df = pd.read_parquet(scoring_path)
+
+# Eğer zaten varsa skip
+if "price_usd_final" in scoring_df.columns:
+    print("✅ price_usd_final already exists — skipping")
+else:
+    review_df = pd.read_parquet(review_master_path)
+
+    # product → price mapping
+    price_map = (
+        review_df[["product_id", "price_usd_final"]]
+        .dropna(subset=["price_usd_final"])
+        .groupby("product_id")["price_usd_final"]
+        .median()
+        .to_dict()
+    )
+
+    # map
+    scoring_df["price_usd_final"] = scoring_df["product_id"].map(price_map)
+
+    # fill missing
+    median_price = scoring_df["price_usd_final"].median()
+    scoring_df["price_usd_final"] = scoring_df["price_usd_final"].fillna(median_price)
+
+    # overwrite parquet
+    scoring_df.to_parquet(scoring_path, index=False)
+
+    print(f"✅ price column added | median: {median_price:.2f}")
+    print(f"Price range: {scoring_df['price_usd_final'].min():.2f} - {scoring_df['price_usd_final'].max():.2f}")
