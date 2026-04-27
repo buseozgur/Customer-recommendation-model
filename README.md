@@ -16,6 +16,12 @@ An intelligent ML-powered recommendation engine that provides personalized skinc
 - [Project Structure](#project-structure)
 - [Contributing](#contributing)
 
+### 🚀 Live Demo
+
+**Try it now:** [https://sephora-ui-289672719102.europe-west1.run.app](https://sephora-ui-289672719102.europe-west1.run.app)
+
+> 💡 **How to use:** Click on the **"AI Beauty Chat"** button on the landing page to start getting personalized recommendations.
+
 ## 🎯 Overview
 
 This recommendation system analyzes over 1 million customer reviews for 8,000+ Sephora products to provide personalized skincare recommendations. The system combines NLP for concern detection, machine learning for ranking, and semantic search for improved recommendations.
